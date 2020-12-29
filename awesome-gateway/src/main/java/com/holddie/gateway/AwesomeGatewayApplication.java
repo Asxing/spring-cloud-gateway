@@ -15,9 +15,13 @@ public class AwesomeGatewayApplication {
 
 	@Bean
 	public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
-		return builder.routes()
-				.route("path_route", r -> r.path("/get")
-						.uri("http://httpbin.org"))
+		return builder.routes().
+				route("path_route", r -> r.path("/get")
+						.filters(f -> f.addRequestHeader("Hello", "World"))
+						.uri("http://httpbin.org")).
+				route("hystrix_route", r -> r.host("*.hystrix.com")
+						.filters(f -> f.hystrix(config -> config.setName("mycmd")))
+						.uri("http://httpbin.org:80"))
 				.build();
 	}
 }
