@@ -170,12 +170,14 @@ import static org.springframework.cloud.gateway.config.HttpClientProperties.Pool
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(name = "spring.cloud.gateway.enabled", matchIfMissing = true)
 @EnableConfigurationProperties
-@AutoConfigureBefore({ HttpHandlerAutoConfiguration.class,
-		WebFluxAutoConfiguration.class })
-@AutoConfigureAfter({ GatewayLoadBalancerClientAutoConfiguration.class,
-		GatewayClassPathWarningAutoConfiguration.class })
+@AutoConfigureBefore({HttpHandlerAutoConfiguration.class,
+		WebFluxAutoConfiguration.class})
+@AutoConfigureAfter({GatewayLoadBalancerClientAutoConfiguration.class,
+		GatewayClassPathWarningAutoConfiguration.class})
 @ConditionalOnClass(DispatcherHandler.class)
 public class GatewayAutoConfiguration {
+
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	@Bean
 	public StringToZonedDateTimeConverter stringToZonedDateTimeConverter() {
@@ -205,6 +207,7 @@ public class GatewayAutoConfiguration {
 	@Primary
 	public RouteDefinitionLocator routeDefinitionLocator(
 			List<RouteDefinitionLocator> routeDefinitionLocators) {
+		logger.info("收集所有路由表 -> GatewayAutoConfiguration#routeDefinitionLocator");
 		return new CompositeRouteDefinitionLocator(
 				Flux.fromIterable(routeDefinitionLocators));
 	}
@@ -222,6 +225,7 @@ public class GatewayAutoConfiguration {
 			List<RoutePredicateFactory> predicates,
 			RouteDefinitionLocator routeDefinitionLocator,
 			ConfigurationService configurationService) {
+		logger.info("routeDefinitionRouteLocator -> GatewayAutoConfiguration#routeDefinitionRouteLocator");
 		return new RouteDefinitionRouteLocator(routeDefinitionLocator, predicates,
 				gatewayFilters, properties, configurationService);
 	}
@@ -231,6 +235,7 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnMissingBean(name = "cachedCompositeRouteLocator")
 	// TODO: property to disable composite?
 	public RouteLocator cachedCompositeRouteLocator(List<RouteLocator> routeLocators) {
+		logger.info("init routeLocator -> GatewayAutoConfiguration#cachedCompositeRouteLocator");
 		return new CachingRouteLocator(
 				new CompositeRouteLocator(Flux.fromIterable(routeLocators)));
 	}
@@ -245,18 +250,30 @@ public class GatewayAutoConfiguration {
 
 	@Bean
 	public FilteringWebHandler filteringWebHandler(List<GlobalFilter> globalFilters) {
+		logger.info("init FilteringWebHandler -> GatewayAutoConfiguration#filteringWebHandler");
+		logger.info("--------web filter--------");
+		for (GlobalFilter x : globalFilters) {
+			String[] split = x.getClass()
+					.toString()
+					.split("\\.");
+			logger.info(split[split.length - 1]);
+		}
+		logger.info("--------end--------");
 		return new FilteringWebHandler(globalFilters);
 	}
 
 	@Bean
 	public GlobalCorsProperties globalCorsProperties() {
+		logger.info("init GlobalCorsProperties -> GatewayAutoConfiguration#globalCorsProperties");
 		return new GlobalCorsProperties();
 	}
 
+	// 最关键地方，打头阵，直接开始组装了.
 	@Bean
 	public RoutePredicateHandlerMapping routePredicateHandlerMapping(
 			FilteringWebHandler webHandler, RouteLocator routeLocator,
 			GlobalCorsProperties globalCorsProperties, Environment environment) {
+		logger.info("直接开始组装了 routePredicateHandlerMapping -> GatewayAutoConfiguration#routePredicateHandlerMapping");
 		return new RoutePredicateHandlerMapping(webHandler, routeLocator,
 				globalCorsProperties, environment);
 	}
@@ -299,18 +316,21 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnEnabledGlobalFilter
 	public AdaptCachedBodyGlobalFilter adaptCachedBodyGlobalFilter() {
+		logger.info("ConditionalOnEnabledGlobalFilter !! GatewayAutoConfiguration:302 !! methodName: adaptCachedBodyGlobalFilter ");
 		return new AdaptCachedBodyGlobalFilter();
 	}
 
 	@Bean
 	@ConditionalOnEnabledGlobalFilter
 	public RemoveCachedBodyFilter removeCachedBodyFilter() {
+		logger.info("ConditionalOnEnabledGlobalFilter -> GatewayAutoConfiguration#removeCachedBodyFilter");
 		return new RemoveCachedBodyFilter();
 	}
 
 	@Bean
 	@ConditionalOnEnabledGlobalFilter
 	public RouteToRequestUrlFilter routeToRequestUrlFilter() {
+		logger.info("ConditionalOnEnabledGlobalFilter -> GatewayAutoConfiguration#routeToRequestUrlFilter");
 		return new RouteToRequestUrlFilter();
 	}
 
@@ -318,6 +338,7 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnEnabledGlobalFilter
 	public ForwardRoutingFilter forwardRoutingFilter(
 			ObjectProvider<DispatcherHandler> dispatcherHandler) {
+		logger.info("使用到了 dispatcherHandler -> GatewayAutoConfiguration#forwardRoutingFilter");
 		return new ForwardRoutingFilter(dispatcherHandler);
 	}
 
@@ -338,6 +359,7 @@ public class GatewayAutoConfiguration {
 	public WebsocketRoutingFilter websocketRoutingFilter(WebSocketClient webSocketClient,
 			WebSocketService webSocketService,
 			ObjectProvider<List<HttpHeadersFilter>> headersFilters) {
+		logger.info("ConditionalOnEnabledGlobalFilter !! GatewayAutoConfiguration:347 -> methodName: websocketRoutingFilter ");
 		return new WebsocketRoutingFilter(webSocketClient, webSocketService,
 				headersFilters);
 	}
@@ -363,54 +385,63 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public AfterRoutePredicateFactory afterRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#afterRoutePredicateFactory");
 		return new AfterRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public BeforeRoutePredicateFactory beforeRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#beforeRoutePredicateFactory");
 		return new BeforeRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public BetweenRoutePredicateFactory betweenRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#betweenRoutePredicateFactory");
 		return new BetweenRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public CookieRoutePredicateFactory cookieRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#cookieRoutePredicateFactory");
 		return new CookieRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public HeaderRoutePredicateFactory headerRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#headerRoutePredicateFactory");
 		return new HeaderRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public HostRoutePredicateFactory hostRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#hostRoutePredicateFactory");
 		return new HostRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public MethodRoutePredicateFactory methodRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#methodRoutePredicateFactory");
 		return new MethodRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public PathRoutePredicateFactory pathRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#pathRoutePredicateFactory");
 		return new PathRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public QueryRoutePredicateFactory queryRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#queryRoutePredicateFactory");
 		return new QueryRoutePredicateFactory();
 	}
 
@@ -418,12 +449,14 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnEnabledPredicate
 	public ReadBodyRoutePredicateFactory readBodyRoutePredicateFactory(
 			ServerCodecConfigurer codecConfigurer) {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#readBodyRoutePredicateFactory");
 		return new ReadBodyRoutePredicateFactory(codecConfigurer.getReaders());
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public RemoteAddrRoutePredicateFactory remoteAddrRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#remoteAddrRoutePredicateFactory");
 		return new RemoteAddrRoutePredicateFactory();
 	}
 
@@ -431,12 +464,14 @@ public class GatewayAutoConfiguration {
 	@DependsOn("weightCalculatorWebFilter")
 	@ConditionalOnEnabledPredicate
 	public WeightRoutePredicateFactory weightRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#weightRoutePredicateFactory");
 		return new WeightRoutePredicateFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledPredicate
 	public CloudFoundryRouteServiceRoutePredicateFactory cloudFoundryRouteServiceRoutePredicateFactory() {
+		logger.info("ConditionalOnEnabledPredicate -> GatewayAutoConfiguration#cloudFoundryRouteServiceRoutePredicateFactory");
 		return new CloudFoundryRouteServiceRoutePredicateFactory();
 	}
 
@@ -445,24 +480,28 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnEnabledFilter
 	public AddRequestHeaderGatewayFilterFactory addRequestHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#addRequestHeaderGatewayFilterFactory");
 		return new AddRequestHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public MapRequestHeaderGatewayFilterFactory mapRequestHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#mapRequestHeaderGatewayFilterFactory");
 		return new MapRequestHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public AddRequestParameterGatewayFilterFactory addRequestParameterGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#addRequestParameterGatewayFilterFactory");
 		return new AddRequestParameterGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public AddResponseHeaderGatewayFilterFactory addResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#addResponseHeaderGatewayFilterFactory");
 		return new AddResponseHeaderGatewayFilterFactory();
 	}
 
@@ -470,12 +509,14 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnEnabledFilter
 	public ModifyRequestBodyGatewayFilterFactory modifyRequestBodyGatewayFilterFactory(
 			ServerCodecConfigurer codecConfigurer) {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#modifyRequestBodyGatewayFilterFactory");
 		return new ModifyRequestBodyGatewayFilterFactory(codecConfigurer.getReaders());
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public DedupeResponseHeaderGatewayFilterFactory dedupeResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#dedupeResponseHeaderGatewayFilterFactory");
 		return new DedupeResponseHeaderGatewayFilterFactory();
 	}
 
@@ -484,6 +525,7 @@ public class GatewayAutoConfiguration {
 	public ModifyResponseBodyGatewayFilterFactory modifyResponseBodyGatewayFilterFactory(
 			ServerCodecConfigurer codecConfigurer, Set<MessageBodyDecoder> bodyDecoders,
 			Set<MessageBodyEncoder> bodyEncoders) {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#modifyResponseBodyGatewayFilterFactory");
 		return new ModifyResponseBodyGatewayFilterFactory(codecConfigurer.getReaders(),
 				bodyDecoders, bodyEncoders);
 	}
@@ -491,36 +533,42 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnEnabledFilter
 	public PrefixPathGatewayFilterFactory prefixPathGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#prefixPathGatewayFilterFactory");
 		return new PrefixPathGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public PreserveHostHeaderGatewayFilterFactory preserveHostHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#preserveHostHeaderGatewayFilterFactory");
 		return new PreserveHostHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RedirectToGatewayFilterFactory redirectToGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#redirectToGatewayFilterFactory");
 		return new RedirectToGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RemoveRequestHeaderGatewayFilterFactory removeRequestHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#removeRequestHeaderGatewayFilterFactory");
 		return new RemoveRequestHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RemoveRequestParameterGatewayFilterFactory removeRequestParameterGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#removeRequestParameterGatewayFilterFactory");
 		return new RemoveRequestParameterGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RemoveResponseHeaderGatewayFilterFactory removeResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#removeResponseHeaderGatewayFilterFactory");
 		return new RemoveResponseHeaderGatewayFilterFactory();
 	}
 
@@ -536,24 +584,28 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnEnabledFilter
 	public RequestRateLimiterGatewayFilterFactory requestRateLimiterGatewayFilterFactory(
 			RateLimiter rateLimiter, KeyResolver resolver) {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#requestRateLimiterGatewayFilterFactory");
 		return new RequestRateLimiterGatewayFilterFactory(rateLimiter, resolver);
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RewritePathGatewayFilterFactory rewritePathGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#rewritePathGatewayFilterFactory");
 		return new RewritePathGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RetryGatewayFilterFactory retryGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#retryGatewayFilterFactory");
 		return new RetryGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SetPathGatewayFilterFactory setPathGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#setPathGatewayFilterFactory");
 		return new SetPathGatewayFilterFactory();
 	}
 
@@ -561,72 +613,84 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnEnabledFilter
 	public SecureHeadersGatewayFilterFactory secureHeadersGatewayFilterFactory(
 			SecureHeadersProperties properties) {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#secureHeadersGatewayFilterFactory");
 		return new SecureHeadersGatewayFilterFactory(properties);
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SetRequestHeaderGatewayFilterFactory setRequestHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#setRequestHeaderGatewayFilterFactory");
 		return new SetRequestHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SetRequestHostHeaderGatewayFilterFactory setRequestHostHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#setRequestHostHeaderGatewayFilterFactory");
 		return new SetRequestHostHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SetResponseHeaderGatewayFilterFactory setResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#setResponseHeaderGatewayFilterFactory");
 		return new SetResponseHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RewriteResponseHeaderGatewayFilterFactory rewriteResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#rewriteResponseHeaderGatewayFilterFactory");
 		return new RewriteResponseHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RewriteLocationResponseHeaderGatewayFilterFactory rewriteLocationResponseHeaderGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#rewriteLocationResponseHeaderGatewayFilterFactory");
 		return new RewriteLocationResponseHeaderGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SetStatusGatewayFilterFactory setStatusGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#setStatusGatewayFilterFactory");
 		return new SetStatusGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public SaveSessionGatewayFilterFactory saveSessionGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#saveSessionGatewayFilterFactory");
 		return new SaveSessionGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public StripPrefixGatewayFilterFactory stripPrefixGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#stripPrefixGatewayFilterFactory");
 		return new StripPrefixGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RequestHeaderToRequestUriGatewayFilterFactory requestHeaderToRequestUriGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#requestHeaderToRequestUriGatewayFilterFactory");
 		return new RequestHeaderToRequestUriGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RequestSizeGatewayFilterFactory requestSizeGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#requestSizeGatewayFilterFactory");
 		return new RequestSizeGatewayFilterFactory();
 	}
 
 	@Bean
 	@ConditionalOnEnabledFilter
 	public RequestHeaderSizeGatewayFilterFactory requestHeaderSizeGatewayFilterFactory() {
+		logger.info("ConditionalOnEnabledFilter -> GatewayAutoConfiguration#requestHeaderSizeGatewayFilterFactory");
 		return new RequestHeaderSizeGatewayFilterFactory();
 	}
 
@@ -654,6 +718,7 @@ public class GatewayAutoConfiguration {
 			};
 		}
 
+		// 自定义请求客户端
 		@Bean
 		@ConditionalOnMissingBean
 		public HttpClient gatewayHttpClient(HttpClientProperties properties,
@@ -676,6 +741,7 @@ public class GatewayAutoConfiguration {
 						pool.getMaxIdleTime(), pool.getMaxLifeTime());
 			}
 
+			logger.info("netty 自己的 HttpClient -> NettyConfiguration#gatewayHttpClient");
 			HttpClient httpClient = HttpClient.create(connectionProvider)
 					// TODO: move customizations to HttpClientCustomizers
 					.httpResponseDecoder(spec -> {
@@ -767,12 +833,13 @@ public class GatewayAutoConfiguration {
 					httpClient = customizer.customize(httpClient);
 				}
 			}
-
+			logger.info("返回使用 Netty 封账过得 HttpClient -> NettyConfiguration#gatewayHttpClient");
 			return httpClient;
 		}
 
 		@Bean
 		public HttpClientProperties httpClientProperties() {
+			logger.info("get httpClientProperties -> NettyConfiguration#httpClientProperties");
 			return new HttpClientProperties();
 		}
 
@@ -781,6 +848,7 @@ public class GatewayAutoConfiguration {
 		public NettyRoutingFilter routingFilter(HttpClient httpClient,
 				ObjectProvider<List<HttpHeadersFilter>> headersFilters,
 				HttpClientProperties properties) {
+			logger.info("执行 routing 过滤 -> NettyConfiguration#routingFilter");
 			return new NettyRoutingFilter(httpClient, headersFilters, properties);
 		}
 
@@ -788,12 +856,14 @@ public class GatewayAutoConfiguration {
 		@ConditionalOnEnabledGlobalFilter
 		public NettyWriteResponseFilter nettyWriteResponseFilter(
 				GatewayProperties properties) {
+			logger.info("Netty 写返回过滤器 -> NettyConfiguration#nettyWriteResponseFilter");
 			return new NettyWriteResponseFilter(properties.getStreamingMediaTypes());
 		}
 
 		@Bean
 		public ReactorNettyWebSocketClient reactorNettyWebSocketClient(
 				HttpClientProperties properties, HttpClient httpClient) {
+			logger.info("响应式ws客户端 -> NettyConfiguration#reactorNettyWebSocketClient");
 			ReactorNettyWebSocketClient webSocketClient = new ReactorNettyWebSocketClient(
 					httpClient);
 			if (properties.getWebsocket().getMaxFramePayloadLength() != null) {
@@ -844,6 +914,8 @@ public class GatewayAutoConfiguration {
 	@ConditionalOnClass(Health.class)
 	protected static class GatewayActuatorConfiguration {
 
+		protected final Log logger = LogFactory.getLog(getClass());
+
 		@Bean
 		@ConditionalOnProperty(name = "spring.cloud.gateway.actuator.verbose.enabled",
 				matchIfMissing = true)
@@ -854,6 +926,7 @@ public class GatewayAutoConfiguration {
 				List<RoutePredicateFactory> routePredicates,
 				RouteDefinitionWriter routeDefinitionWriter, RouteLocator routeLocator,
 				RouteDefinitionLocator routeDefinitionLocator) {
+			logger.info("gatewayControllerEndpoint -> GatewayActuatorConfiguration#gatewayControllerEndpoint");
 			return new GatewayControllerEndpoint(globalFilters, gatewayFilters,
 					routePredicates, routeDefinitionWriter, routeLocator,
 					routeDefinitionLocator);
@@ -868,6 +941,7 @@ public class GatewayAutoConfiguration {
 				List<GatewayFilterFactory> gatewayFilters,
 				List<RoutePredicateFactory> routePredicates,
 				RouteDefinitionWriter routeDefinitionWriter, RouteLocator routeLocator) {
+			logger.info("gatewayLegacyControllerEndpoint -> GatewayActuatorConfiguration#gatewayLegacyControllerEndpoint");
 			return new GatewayLegacyControllerEndpoint(routeDefinitionLocator,
 					globalFilters, gatewayFilters, routePredicates, routeDefinitionWriter,
 					routeLocator);

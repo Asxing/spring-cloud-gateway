@@ -56,6 +56,7 @@ public class FilteringWebHandler implements WebHandler {
 	}
 
 	private static List<GatewayFilter> loadFilters(List<GlobalFilter> filters) {
+		logger.info("对 GlobalFilter 进行排序 -> FilteringWebHandler#loadFilters");
 		return filters.stream().map(filter -> {
 			GatewayFilterAdapter gatewayFilter = new GatewayFilterAdapter(filter);
 			if (filter instanceof Ordered) {
@@ -73,6 +74,7 @@ public class FilteringWebHandler implements WebHandler {
 
 	@Override
 	public Mono<Void> handle(ServerWebExchange exchange) {
+		logger.info("执行到 FilteringWebHandler -> FilteringWebHandler#handle");
 		Route route = exchange.getRequiredAttribute(GATEWAY_ROUTE_ATTR);
 		List<GatewayFilter> gatewayFilters = route.getFilters();
 

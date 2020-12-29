@@ -128,6 +128,7 @@ public class NettyRoutingFilter implements GlobalFilter, Ordered {
 				.getAttributeOrDefault(PRESERVE_HOST_HEADER_ATTRIBUTE, false);
 		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
 
+		log.info("filter 使用 netty 自己的 HttpClient -> NettyRoutingFilter#filter");
 		Flux<HttpClientResponse> responseFlux = getHttpClient(route, exchange)
 				.headers(headers -> {
 					headers.add(httpHeaders);

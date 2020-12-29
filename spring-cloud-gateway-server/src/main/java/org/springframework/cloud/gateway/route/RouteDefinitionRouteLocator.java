@@ -65,12 +65,16 @@ public class RouteDefinitionRouteLocator
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	// 一个 RouteDefinitionLocator 对象.
 	private final RouteDefinitionLocator routeDefinitionLocator;
 
 	private final ConfigurationService configurationService;
 
+	// Predicate 工厂列表，会被映射成 key 为 name, value 为 factory 的 Map.
+	// 可以猜想出 gateway 是如何根据 PredicateDefinition 中定义的 name 来匹配到相对应的 factory 了.
 	private final Map<String, RoutePredicateFactory> predicates = new LinkedHashMap<>();
 
+	// Gateway Filter 工厂列表，同样会被映射成 key 为 name, value 为 factory 的 Map.
 	private final Map<String, GatewayFilterFactory> gatewayFilterFactories = new HashMap<>();
 
 	private final GatewayProperties gatewayProperties;
@@ -143,6 +147,7 @@ public class RouteDefinitionRouteLocator
 
 	@Override
 	public Flux<Route> getRoutes() {
+		// 获取所有的 RouteDefinition 并将其转化成 Route.
 		Flux<Route> routes = this.routeDefinitionLocator.getRouteDefinitions()
 				.map(this::convertToRoute);
 
@@ -166,9 +171,10 @@ public class RouteDefinitionRouteLocator
 	}
 
 	private Route convertToRoute(RouteDefinition routeDefinition) {
+		// 开始转化.
 		AsyncPredicate<ServerWebExchange> predicate = combinePredicates(routeDefinition);
 		List<GatewayFilter> gatewayFilters = getFilters(routeDefinition);
-
+		// 直接构造.
 		return Route.async(routeDefinition).asyncPredicate(predicate)
 				.replaceFilters(gatewayFilters).build();
 	}
@@ -208,15 +214,18 @@ public class RouteDefinitionRouteLocator
 				hasRouteId.setRouteId(id);
 			}
 
+			// 根据 configuration apply 成对应的 GatewayFilter.
 			GatewayFilter gatewayFilter = factory.apply(configuration);
 			if (gatewayFilter instanceof Ordered) {
 				ordered.add(gatewayFilter);
 			}
 			else {
+				// 否则按照声明的顺序进行加载.
 				ordered.add(new OrderedGatewayFilter(gatewayFilter, i + 1));
 			}
 		}
 
+		// 返回已经排好序的 GatewayFilter.
 		return ordered;
 	}
 
@@ -261,6 +270,7 @@ public class RouteDefinitionRouteLocator
 	@SuppressWarnings("unchecked")
 	private AsyncPredicate<ServerWebExchange> lookup(RouteDefinition route,
 			PredicateDefinition predicate) {
+		logger.info("lookup RoutePredicateFactory by predicate.getName() -> RouteDefinitionRouteLocator#lookup");
 		RoutePredicateFactory<Object> factory = this.predicates.get(predicate.getName());
 		if (factory == null) {
 			throw new IllegalArgumentException(

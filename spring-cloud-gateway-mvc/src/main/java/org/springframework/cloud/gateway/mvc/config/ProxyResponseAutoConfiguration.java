@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -47,9 +51,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnWebApplication
-@ConditionalOnClass({ HandlerMethodReturnValueHandler.class })
+@ConditionalOnClass({HandlerMethodReturnValueHandler.class})
 @EnableConfigurationProperties(ProxyProperties.class)
 public class ProxyResponseAutoConfiguration implements WebMvcConfigurer {
+
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	@Autowired
 	private ApplicationContext context;
@@ -58,6 +64,7 @@ public class ProxyResponseAutoConfiguration implements WebMvcConfigurer {
 	@ConditionalOnMissingBean
 	public ProxyExchangeArgumentResolver proxyExchangeArgumentResolver(
 			Optional<RestTemplateBuilder> optional, ProxyProperties proxy) {
+		logger.info(" -> ProxyResponseAutoConfiguration#proxyExchangeArgumentResolver");
 		RestTemplateBuilder builder = optional.orElse(new RestTemplateBuilder());
 		RestTemplate template = builder.build();
 		template.setErrorHandler(new NoOpResponseErrorHandler());

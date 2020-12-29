@@ -33,9 +33,11 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 @Validated
 public class FilterDefinition {
 
+	// 定义了 Filter 的名称，符合特定的命名规范，为对应的工厂名前缀.
 	@NotNull
 	private String name;
 
+	// 一个键值对参数用于构造 Filter 对象.
 	private Map<String, String> args = new LinkedHashMap<>();
 
 	public FilterDefinition() {
@@ -52,6 +54,7 @@ public class FilterDefinition {
 		String[] args = tokenizeToStringArray(text.substring(eqIdx + 1), ",");
 
 		for (int i = 0; i < args.length; i++) {
+			// 对应每个值都是 value，key 为固定字符串加数组元素下标.
 			this.args.put(NameUtils.generateName(i), args[i]);
 		}
 	}

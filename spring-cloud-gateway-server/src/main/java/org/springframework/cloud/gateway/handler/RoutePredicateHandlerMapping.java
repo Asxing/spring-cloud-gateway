@@ -77,11 +77,13 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 
 	@Override
 	protected Mono<?> getHandlerInternal(ServerWebExchange exchange) {
+		logger.info(" -> RoutePredicateHandlerMapping#getHandlerInternal");
 		// don't handle requests on management port if set and different than server port
 		if (this.managementPortType == DIFFERENT && this.managementPort != null
 				&& exchange.getRequest().getURI().getPort() == this.managementPort) {
 			return Mono.empty();
 		}
+		// 设置当前处理使用的 HandlerMapping 是哪个.
 		exchange.getAttributes().put(GATEWAY_HANDLER_MAPPER_ATTR, getSimpleName());
 
 		return lookupRoute(exchange)
@@ -107,6 +109,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	@Override
 	protected CorsConfiguration getCorsConfiguration(Object handler,
 			ServerWebExchange exchange) {
+		logger.info("获取 CorsConfiguration 配置");
 		// TODO: support cors configuration via properties on a route see gh-229
 		// see RequestMappingHandlerMapping.initCorsConfiguration()
 		// also see
@@ -125,6 +128,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	protected Mono<Route> lookupRoute(ServerWebExchange exchange) {
+		logger.info("lookupRoute 开始寻找 -> RoutePredicateHandlerMapping#lookupRoute");
 		return this.routeLocator.getRoutes()
 				// individually filter routes so that filterWhen error delaying is not a
 				// problem

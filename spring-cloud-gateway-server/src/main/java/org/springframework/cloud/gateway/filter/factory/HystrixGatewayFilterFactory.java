@@ -26,6 +26,8 @@ import com.netflix.hystrix.HystrixCommandKey;
 import com.netflix.hystrix.HystrixObservableCommand;
 import com.netflix.hystrix.HystrixObservableCommand.Setter;
 import com.netflix.hystrix.exception.HystrixRuntimeException;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
 import rx.Observable;
@@ -232,6 +234,8 @@ public class HystrixGatewayFilterFactory
 	// TODO: replace with HystrixMonoCommand that we write
 	private class RouteHystrixCommand extends HystrixObservableCommand<Void> {
 
+		protected final Log logger = LogFactory.getLog(getClass());
+		
 		private final URI fallbackUri;
 
 		private final ServerWebExchange exchange;
@@ -257,6 +261,7 @@ public class HystrixGatewayFilterFactory
 
 		@Override
 		protected Observable<Void> resumeWithFallback() {
+			logger.info("执行 fallback 方法 -> RouteHystrixCommand#resumeWithFallback");
 			if (this.fallbackUri == null) {
 				return super.resumeWithFallback();
 			}

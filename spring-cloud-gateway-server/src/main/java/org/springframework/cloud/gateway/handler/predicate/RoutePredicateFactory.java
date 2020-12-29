@@ -65,9 +65,11 @@ public interface RoutePredicateFactory<C> extends ShortcutConfigurable, Configur
 	default void beforeApply(C config) {
 	}
 
+	// 通过配置对象，生成一个 Predicate 对象.
 	Predicate<ServerWebExchange> apply(C config);
 
 	default AsyncPredicate<ServerWebExchange> applyAsync(C config) {
+		// 直接对 apply() 方法的包装,调用静态方法.
 		return toAsyncPredicate(apply(config));
 	}
 
