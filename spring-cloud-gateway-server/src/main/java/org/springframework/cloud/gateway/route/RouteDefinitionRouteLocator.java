@@ -147,7 +147,7 @@ public class RouteDefinitionRouteLocator
 
 	@Override
 	public Flux<Route> getRoutes() {
-		// 获取所有的 RouteDefinition 并将其转化成 Route.
+		logger.info("获取所有的 RouteDefinition 并将其转化成 Route -> RouteDefinitionRouteLocator#getRoutes");
 		Flux<Route> routes = this.routeDefinitionLocator.getRouteDefinitions()
 				.map(this::convertToRoute);
 

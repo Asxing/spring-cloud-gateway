@@ -74,19 +74,21 @@ public class FilteringWebHandler implements WebHandler {
 
 	@Override
 	public Mono<Void> handle(ServerWebExchange exchange) {
-		logger.info("执行到 FilteringWebHandler -> FilteringWebHandler#handle");
+		logger.info("DispatcherHandler#invokeHandler -> handlerAdapter.handle(exchange, handler); \n "
+				+ "执行到 FilteringWebHandler -> FilteringWebHandler#handle");
 		Route route = exchange.getRequiredAttribute(GATEWAY_ROUTE_ATTR);
 		List<GatewayFilter> gatewayFilters = route.getFilters();
 
 		List<GatewayFilter> combined = new ArrayList<>(this.globalFilters);
 		combined.addAll(gatewayFilters);
 		// TODO: needed or cached?
+		logger.info("对 Filter 进行排序 -> FilteringWebHandler#handle");
 		AnnotationAwareOrderComparator.sort(combined);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug("Sorted gatewayFilterFactories: " + combined);
 		}
-
+		logger.info("创建默认的 DefaultGatewayFilterChain -> FilteringWebHandler#handle");
 		return new DefaultGatewayFilterChain(combined).filter(exchange);
 	}
 
@@ -115,8 +117,9 @@ public class FilteringWebHandler implements WebHandler {
 			return Mono.defer(() -> {
 				if (this.index < filters.size()) {
 					GatewayFilter filter = filters.get(this.index);
-					DefaultGatewayFilterChain chain = new DefaultGatewayFilterChain(this,
-							this.index + 1);
+					logger.info("当前执行 filter 是：" + filter.getClass() + " -> DefaultGatewayFilterChain#filter");
+					DefaultGatewayFilterChain chain = new DefaultGatewayFilterChain(this, this.index + 1);
+					logger.info("执行具体的 filter 的过滤操作 -> DefaultGatewayFilterChain#filter");
 					return filter.filter(exchange, chain);
 				}
 				else {

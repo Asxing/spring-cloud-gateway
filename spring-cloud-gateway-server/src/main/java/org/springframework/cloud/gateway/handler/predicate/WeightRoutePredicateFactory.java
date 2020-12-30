@@ -91,6 +91,7 @@ public class WeightRoutePredicateFactory
 						Collections.emptyMap());
 
 				String routeId = exchange.getAttribute(GATEWAY_PREDICATE_ROUTE_ATTR);
+				log.info("获取当前 routeId -> WeightRoutePredicateFactory#test");
 
 				// all calculations and comparison against random num happened in
 				// WeightCalculatorWebFilter

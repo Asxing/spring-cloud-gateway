@@ -59,6 +59,7 @@ public class ForwardRoutingFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info(" -> ForwardRoutingFilter#filter");
 		URI requestUrl = exchange.getRequiredAttribute(GATEWAY_REQUEST_URL_ATTR);
 
 		String scheme = requestUrl.getScheme();
