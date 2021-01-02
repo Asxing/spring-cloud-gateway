@@ -90,11 +90,14 @@ public class WebsocketRoutingFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info("执行到 -> WebsocketRoutingFilter#filter");
+		// 如果是 ws 则修改 gatewayRequestUrl, 这个参数在 RouteToRequestUrlFilter 中设置
 		changeSchemeIfIsWebSocketUpgrade(exchange);
-
+		// 然后获取上一步设置好的 gatewayRequestUrl 值
 		URI requestUrl = exchange.getRequiredAttribute(GATEWAY_REQUEST_URL_ATTR);
 		String scheme = requestUrl.getScheme();
 
+		// 如果已经 gatewayAlreadyRouted 已经为 true 或者 scheme 不是 ws 或 wss 则略过
 		if (isAlreadyRouted(exchange)
 				|| (!"ws".equals(scheme) && !"wss".equals(scheme))) {
 			return chain.filter(exchange);

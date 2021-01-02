@@ -61,6 +61,7 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info("执行到 RouteToRequestUrlFilter#filter");
 		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
 		if (route == null) {
 			return chain.filter(exchange);
@@ -78,6 +79,7 @@ public class RouteToRequestUrlFilter implements GlobalFilter, Ordered {
 			routeUri = URI.create(routeUri.getSchemeSpecificPart());
 		}
 
+		// 对于 loadbalance 的判断
 		if ("lb".equalsIgnoreCase(routeUri.getScheme()) && routeUri.getHost() == null) {
 			// Load balanced URIs should always have a host. If the host is null it is
 			// most

@@ -18,6 +18,8 @@ package org.springframework.cloud.gateway.filter;
 
 import java.net.URI;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Mono;
 
 import org.springframework.cloud.gateway.route.Route;
@@ -34,12 +36,16 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.i
  * @author Ryan Baxter
  */
 public class ForwardPathFilter implements GlobalFilter, Ordered {
+	
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		logger.info("执行到 ForwardPathFilter#filter");
 		Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
 		URI routeUri = route.getUri();
 		String scheme = routeUri.getScheme();
+		// 是否已经转发过(gatewayAlreadyRouted) 或 没有包含 forward 关键字
 		if (isAlreadyRouted(exchange) || !"forward".equals(scheme)) {
 			return chain.filter(exchange);
 		}

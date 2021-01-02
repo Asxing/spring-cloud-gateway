@@ -33,9 +33,13 @@ public class RemoveCachedBodyFilter implements GlobalFilter, Ordered {
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 		return chain.filter(exchange).doFinally(s -> {
+			log.info("执行到 RemoveCachedBodyFilter#filter ");
+			// 移除上下文中 cachedRequestBody 属性
 			Object attribute = exchange.getAttributes().remove(CACHED_REQUEST_BODY_ATTR);
+			// PooledDataBuffer 是 DataBuffer 的扩展，允许共享一块内存共享池 
 			if (attribute != null && attribute instanceof PooledDataBuffer) {
 				PooledDataBuffer dataBuffer = (PooledDataBuffer) attribute;
+				// 如果还有占用，则释放
 				if (dataBuffer.isAllocated()) {
 					if (log.isTraceEnabled()) {
 						log.trace("releasing cached body in exchange attribute");

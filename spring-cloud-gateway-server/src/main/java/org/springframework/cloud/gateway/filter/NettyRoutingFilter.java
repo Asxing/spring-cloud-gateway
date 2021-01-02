@@ -105,6 +105,8 @@ public class NettyRoutingFilter implements GlobalFilter, Ordered {
 	@Override
 	@SuppressWarnings("Duplicates")
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info("执行到 -> NettyRoutingFilter#filter");
+		// 获取之前 filter 设置好的 gatewayRequestUrl 
 		URI requestUrl = exchange.getRequiredAttribute(GATEWAY_REQUEST_URL_ATTR);
 
 		String scheme = requestUrl.getScheme();

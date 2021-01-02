@@ -62,12 +62,14 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info("执行到 NettyWriteResponseFilter#filter");
 		// NOTICE: nothing in "pre" filter stage as CLIENT_RESPONSE_CONN_ATTR is not added
 		// until the NettyRoutingFilter is run
 		// @formatter:off
 		return chain.filter(exchange)
 				.doOnError(throwable -> cleanup(exchange))
 				.then(Mono.defer(() -> {
+					// 获取 gatewayClientResponseConnection 连接
 					Connection connection = exchange.getAttribute(CLIENT_RESPONSE_CONN_ATTR);
 
 					if (connection == null) {
@@ -85,6 +87,7 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 							.inbound()
 							.receive()
 							.retain()
+							// byteBuf -> DataBuffer, netty 数据结构到 spring 数据结构 
 							.map(byteBuf -> wrap(byteBuf, response));
 
 					MediaType contentType = null;
@@ -96,6 +99,7 @@ public class NettyWriteResponseFilter implements GlobalFilter, Ordered {
 							log.trace("invalid media type", e);
 						}
 					}
+					// 根据不同类型，是否直接刷盘发送
 					return (isStreamingMediaType(contentType)
 							? response.writeAndFlushWith(body.map(Flux::just))
 							: response.writeWith(body));

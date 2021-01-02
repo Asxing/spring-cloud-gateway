@@ -87,8 +87,10 @@ public class GatewayMetricsFilter implements GlobalFilter, Ordered {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+		log.info("执行到 GatewayMetricsFilter#filter");
 		Sample sample = Timer.start(meterRegistry);
 
+		// 添加对于成功或异常调用的方法
 		return chain.filter(exchange)
 				.doOnSuccess(aVoid -> endTimerRespectingCommit(exchange, sample))
 				.doOnError(throwable -> endTimerRespectingCommit(exchange, sample));

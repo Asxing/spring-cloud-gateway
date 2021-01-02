@@ -88,9 +88,21 @@ public class WebClientHttpRoutingFilter implements GlobalFilter, Ordered {
 
 		HttpHeaders filteredHeaders = filterRequest(getHeadersFilters(), exchange);
 
+		// 判断是否 保留主机标头属性名称
 		boolean preserveHost = exchange
 				.getAttributeOrDefault(PRESERVE_HOST_HEADER_ATTRIBUTE, false);
 
+
+		/*
+		 * 在 GatewayAutoConfiguration 中有如下一块注释，说我们可以自定义 WebClient 来覆盖 netty
+		 * @Bean //TODO: default over netty? configurable public WebClientHttpRoutingFilter
+		 * webClientHttpRoutingFilter() { //TODO: WebClient bean return new
+		 * WebClientHttpRoutingFilter(WebClient.routes().build()); }
+		 *
+		 * @Bean public WebClientWriteResponseFilter webClientWriteResponseFilter() { return
+		 * new WebClientWriteResponseFilter(); }
+		 */
+		// 使用 webClient 
 		RequestBodySpec bodySpec = this.webClient.method(method).uri(requestUrl)
 				.headers(httpHeaders -> {
 					httpHeaders.addAll(filteredHeaders);
@@ -109,8 +121,9 @@ public class WebClientHttpRoutingFilter implements GlobalFilter, Ordered {
 		}
 
 		return headersSpec.exchange()
-				// .log("webClient route")
+				 .log("webClient route")
 				.flatMap(res -> {
+					// 将返回的结构再次封装到 exchange 中,同时设置 gatewayClientResponse
 					ServerHttpResponse response = exchange.getResponse();
 					response.getHeaders().putAll(res.headers().asHttpHeaders());
 					response.setStatusCode(res.statusCode());
