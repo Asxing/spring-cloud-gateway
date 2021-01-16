@@ -154,6 +154,8 @@
 		<module>spring-cloud-gateway-sample</module>
 		<module>docs</module>
 		<module>awesome-gateway</module>
+		<module>hello-world</module>
+		<module>hello-world-mvc</module>
 	</modules>
 
 	<build>

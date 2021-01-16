@@ -20,9 +20,12 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.embedded.netty.NettyReactiveWebServerFactory;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -36,9 +39,12 @@ public class AwesomeGatewayApplication {
 
 	@Bean
 	public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
-		return builder.routes().route("path_route",
-				r -> r.path("/get").filters(f -> f.addRequestHeader("Hello", "World"))
-						.uri("http://httpbin.org"))
+		return builder.routes().route("flux",
+				r -> r.path("/flux").filters(f -> f.addRequestHeader("Hello", "World"))
+						.uri("http://localhost:8081/flux"))
+				.route("mvc",
+						r -> r.path("/mvc").filters(f -> f.addRequestHeader("Hello", "World"))
+								.uri("http://localhost:8082/mvc"))
 				.route("hystrix_route",
 						r -> r.host("*.hystrix.com")
 								.filters(f -> f.hystrix(config -> config.setName("mycmd")
@@ -52,4 +58,19 @@ public class AwesomeGatewayApplication {
 		return Mono.just("fallback");
 	}
 
+	@Bean
+	public NettyReactiveWebServerFactory nettyReactiveWebServerFactory() {
+		NettyReactiveWebServerFactory webServerFactory = new NettyReactiveWebServerFactory();
+		webServerFactory.addServerCustomizers(new EventLoopNettyCustomizer());
+		return webServerFactory;
+	}
+
+	@Component
+	public class NettyWebServerFactoryPortCustomizer
+			implements WebServerFactoryCustomizer<NettyReactiveWebServerFactory> {
+		@Override
+		public void customize(NettyReactiveWebServerFactory serverFactory) {
+			serverFactory.setPort(8089);
+		}
+	}
 }

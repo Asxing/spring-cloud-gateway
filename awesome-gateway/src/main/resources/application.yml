@@ -2,6 +2,8 @@ spring:
   cloud:
     gateway:
       enabled: true;
+  application:
+    name: awesome-gateway
 
 logging:
   level:
